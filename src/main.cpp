@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
@@ -45,7 +46,7 @@ int main() {
         sockaddr_in clientAddress{};
         socklen_t clientSize = sizeof(clientAddress);
 
-        // Accept client connection
+        // Accept client
         int clientSocket = accept(
             serverSocket,
             (struct sockaddr*)&clientAddress,
@@ -57,7 +58,29 @@ int main() {
             continue;
         }
 
-        std::cout << "Client connected successfully\n";
+        std::cout << "Client connected\n";
+
+        // HTTP response
+        std::string response =
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/html\r\n"
+            "\r\n"
+            "<html>"
+            "<head><title>Custom HTTP Server</title></head>"
+            "<body>"
+            "<h1>Custom HTTP Server Running</h1>"
+            "</body>"
+            "</html>";
+
+        // Send response
+        send(
+            clientSocket,
+            response.c_str(),
+            response.size(),
+            0
+        );
+
+        std::cout << "Response sent successfully\n";
 
         close(clientSocket);
     }
