@@ -4,17 +4,18 @@
 #include <unistd.h>
 
 int main() {
+
     // Create socket
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 
     if (serverSocket == -1) {
-        std::cerr << "Failed to create socket\n";
+        std::cerr << "Socket creation failed\n";
         return 1;
     }
 
     std::cout << "Socket created successfully\n";
 
-    // Define server address
+    // Server address
     sockaddr_in serverAddress{};
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(8080);
@@ -31,7 +32,7 @@ int main() {
 
     std::cout << "Bind successful on port 8080\n";
 
-    // Listen for connections
+    // Listen
     if (listen(serverSocket, 5) < 0) {
         std::cerr << "Listen failed\n";
         return 1;
@@ -39,8 +40,26 @@ int main() {
 
     std::cout << "Server listening on port 8080...\n";
 
-    // Keep server alive
     while (true) {
+
+        sockaddr_in clientAddress{};
+        socklen_t clientSize = sizeof(clientAddress);
+
+        // Accept client connection
+        int clientSocket = accept(
+            serverSocket,
+            (struct sockaddr*)&clientAddress,
+            &clientSize
+        );
+
+        if (clientSocket < 0) {
+            std::cerr << "Client accept failed\n";
+            continue;
+        }
+
+        std::cout << "Client connected successfully\n";
+
+        close(clientSocket);
     }
 
     close(serverSocket);
