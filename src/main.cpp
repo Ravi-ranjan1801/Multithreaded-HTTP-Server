@@ -7,6 +7,8 @@
 #include <fstream>
 #include <thread>
 #include <vector>
+#include <ctime>
+#include <iomanip>
 
 std::string readFile(const std::string& filePath) {
 
@@ -37,9 +39,31 @@ std::string getContentType(const std::string& path) {
     return "text/plain";
 }
 
+std::string getCurrentTime() {
+
+    std::time_t now = std::time(nullptr);
+
+    std::tm* localTime = std::localtime(&now);
+
+    std::stringstream timeStream;
+
+    timeStream
+        << std::put_time(localTime, "%Y-%m-%d %H:%M:%S");
+
+    return timeStream.str();
+}
+
+void logMessage(const std::string& message) {
+
+    std::cout
+        << "[" << getCurrentTime() << "] "
+        << message
+        << std::endl;
+}
+
 void handleClient(int clientSocket) {
 
-    std::cout << "\nClient connected\n";
+  logMessage("Client connected");
 
     char buffer[4096] = {0};
 
@@ -66,7 +90,7 @@ void handleClient(int clientSocket) {
 
     requestStream >> method >> path >> version;
 
-    std::cout << "Path: " << path << std::endl;
+    logMessage("Requested path: " + path);
 
     std::string filePath;
 
@@ -83,6 +107,7 @@ void handleClient(int clientSocket) {
     std::string response;
 
     if (!filePath.empty()) {
+        logMessage("Response: 200 OK");
 
         std::string fileContent = readFile(filePath);
 
@@ -103,6 +128,7 @@ void handleClient(int clientSocket) {
             "Server is healthy";
     }
     else {
+        logMessage("Response: 404 Not Found");
 
         std::string fileContent =
             "<html><body><h1>404 Not Found</h1></body></html>";
@@ -154,7 +180,7 @@ int main() {
         return 1;
     }
 
-    std::cout << "Server running on port 8080...\n";
+    logMessage("Server running on port 8080...");
 
     while (true) {
 
