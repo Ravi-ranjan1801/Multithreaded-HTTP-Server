@@ -22,6 +22,19 @@ std::string readFile(const std::string& filePath) {
     return content;
 }
 
+std::string getContentType(const std::string& path) {
+
+    if (path.find(".css") != std::string::npos) {
+        return "text/css";
+    }
+
+    if (path.find(".html") != std::string::npos) {
+        return "text/html";
+    }
+
+    return "text/plain";
+}
+
 int main() {
 
     // Create socket
@@ -111,26 +124,29 @@ int main() {
         std::cout << "Version: " << version << std::endl;
 
         // Response
-     std::string response;
-std::string fileContent;
+    std::string filePath;
 
 if (path == "/") {
-
-    fileContent = readFile("static/index.html");
-
-    response =
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: text/html\r\n"
-        "\r\n" +
-        fileContent;
+    filePath = "static/index.html";
 }
 else if (path == "/about") {
+    filePath = "static/about.html";
+}
+else if (path == "/style.css") {
+    filePath = "static/style.css";
+}
 
-    fileContent = readFile("static/about.html");
+std::string response;
+
+if (!filePath.empty()) {
+
+    std::string fileContent = readFile(filePath);
+
+    std::string contentType = getContentType(filePath);
 
     response =
         "HTTP/1.1 200 OK\r\n"
-        "Content-Type: text/html\r\n"
+        "Content-Type: " + contentType + "\r\n"
         "\r\n" +
         fileContent;
 }
@@ -144,7 +160,7 @@ else if (path == "/health") {
 }
 else {
 
-    fileContent =
+    std::string fileContent =
         "<html><body><h1>404 Not Found</h1></body></html>";
 
     response =
