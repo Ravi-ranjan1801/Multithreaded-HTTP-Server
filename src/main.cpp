@@ -94,15 +94,56 @@ int main() {
         std::cout << "Version: " << version << std::endl;
 
         // Response
-        std::string response =
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Type: text/html\r\n"
-            "\r\n"
-            "<html>"
-            "<body>"
-            "<h1>HTTP Request Parsed Successfully</h1>"
-            "</body>"
-            "</html>";
+       std::string response;
+
+if (path == "/") {
+
+    response =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/html\r\n"
+        "\r\n"
+        "<html>"
+        "<body>"
+        "<h1>Welcome to Custom HTTP Server</h1>"
+        "</body>"
+        "</html>";
+
+}
+else if (path == "/about") {
+
+    response =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/html\r\n"
+        "\r\n"
+        "<html>"
+        "<body>"
+        "<h1>About Page</h1>"
+        "<p>Built from scratch in C++</p>"
+        "</body>"
+        "</html>";
+
+}
+else if (path == "/health") {
+
+    response =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/plain\r\n"
+        "\r\n"
+        "Server is healthy";
+
+}
+else {
+
+    response =
+        "HTTP/1.1 404 Not Found\r\n"
+        "Content-Type: text/html\r\n"
+        "\r\n"
+        "<html>"
+        "<body>"
+        "<h1>404 Not Found</h1>"
+        "</body>"
+        "</html>";
+}
 
         send(
             clientSocket,
