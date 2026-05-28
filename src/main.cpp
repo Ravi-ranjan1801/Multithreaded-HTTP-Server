@@ -5,6 +5,8 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <fstream>
+#include <thread>
+#include <vector>
 
 std::string readFile(const std::string& filePath) {
 
@@ -33,6 +35,93 @@ std::string getContentType(const std::string& path) {
     }
 
     return "text/plain";
+}
+
+void handleClient(int clientSocket) {
+
+    std::cout << "\nClient connected\n";
+
+    char buffer[4096] = {0};
+
+    int bytesReceived = recv(
+        clientSocket,
+        buffer,
+        sizeof(buffer),
+        0
+    );
+
+    if (bytesReceived < 0) {
+        std::cerr << "Receive failed\n";
+        close(clientSocket);
+        return;
+    }
+
+    std::string request(buffer);
+
+    std::stringstream requestStream(request);
+
+    std::string method;
+    std::string path;
+    std::string version;
+
+    requestStream >> method >> path >> version;
+
+    std::cout << "Path: " << path << std::endl;
+
+    std::string filePath;
+
+    if (path == "/") {
+        filePath = "static/index.html";
+    }
+    else if (path == "/about") {
+        filePath = "static/about.html";
+    }
+    else if (path == "/style.css") {
+        filePath = "static/style.css";
+    }
+
+    std::string response;
+
+    if (!filePath.empty()) {
+
+        std::string fileContent = readFile(filePath);
+
+        std::string contentType = getContentType(filePath);
+
+        response =
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: " + contentType + "\r\n"
+            "\r\n" +
+            fileContent;
+    }
+    else if (path == "/health") {
+
+        response =
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/plain\r\n"
+            "\r\n"
+            "Server is healthy";
+    }
+    else {
+
+        std::string fileContent =
+            "<html><body><h1>404 Not Found</h1></body></html>";
+
+        response =
+            "HTTP/1.1 404 Not Found\r\n"
+            "Content-Type: text/html\r\n"
+            "\r\n" +
+            fileContent;
+    }
+
+    send(
+        clientSocket,
+        response.c_str(),
+        response.size(),
+        0
+    );
+
+    close(clientSocket);
 }
 
 int main() {
@@ -69,116 +158,29 @@ int main() {
 
     while (true) {
 
-        sockaddr_in clientAddress{};
-        socklen_t clientSize = sizeof(clientAddress);
+    sockaddr_in clientAddress{};
+    socklen_t clientSize = sizeof(clientAddress);
 
-        // Accept client
-        int clientSocket = accept(
-            serverSocket,
-            (struct sockaddr*)&clientAddress,
-            &clientSize
-        );
+    int clientSocket = accept(
+        serverSocket,
+        (struct sockaddr*)&clientAddress,
+        &clientSize
+    );
 
-        if (clientSocket < 0) {
-            std::cerr << "Accept failed\n";
-            continue;
-        }
-
-        std::cout << "\nClient connected\n";
-
-        // Buffer to store request
-        char buffer[4096] = {0};
-
-        // Read request
-        int bytesReceived = recv(
-            clientSocket,
-            buffer,
-            sizeof(buffer),
-            0
-        );
-
-        if (bytesReceived < 0) {
-            std::cerr << "Receive failed\n";
-            close(clientSocket);
-            continue;
-        }
-
-        // Convert request to string
-        std::string request(buffer);
-
-        // Print raw HTTP request
-        std::cout << "\n===== HTTP REQUEST =====\n";
-        std::cout << request << std::endl;
-
-        // Parse request line
-        std::stringstream requestStream(request);
-
-        std::string method;
-        std::string path;
-        std::string version;
-
-        requestStream >> method >> path >> version;
-
-        std::cout << "Method: " << method << std::endl;
-        std::cout << "Path: " << path << std::endl;
-        std::cout << "Version: " << version << std::endl;
-
-        // Response
-    std::string filePath;
-
-if (path == "/") {
-    filePath = "static/index.html";
-}
-else if (path == "/about") {
-    filePath = "static/about.html";
-}
-else if (path == "/style.css") {
-    filePath = "static/style.css";
-}
-
-std::string response;
-
-if (!filePath.empty()) {
-
-    std::string fileContent = readFile(filePath);
-
-    std::string contentType = getContentType(filePath);
-
-    response =
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: " + contentType + "\r\n"
-        "\r\n" +
-        fileContent;
-}
-else if (path == "/health") {
-
-    response =
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: text/plain\r\n"
-        "\r\n"
-        "Server is healthy";
-}
-else {
-
-    std::string fileContent =
-        "<html><body><h1>404 Not Found</h1></body></html>";
-
-    response =
-        "HTTP/1.1 404 Not Found\r\n"
-        "Content-Type: text/html\r\n"
-        "\r\n" +
-        fileContent;
-}
-
-        send(
-            clientSocket,
-            response.c_str(),
-            response.size(),
-            0
-        );
-
-        close(clientSocket);
+    if (clientSocket < 0) {
+        std::cerr << "Accept failed\n";
+        continue;
     }
+
+    // Create thread for each client
+    std::thread clientThread(
+        handleClient,
+        clientSocket
+    );
+
+    // Detach thread
+    clientThread.detach();
+}
 
     close(serverSocket);
 
