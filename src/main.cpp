@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <sstream>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
@@ -14,15 +15,12 @@ int main() {
         return 1;
     }
 
-    std::cout << "Socket created successfully\n";
-
-    // Server address
     sockaddr_in serverAddress{};
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(8080);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
 
-    // Bind socket
+    // Bind
     if (bind(serverSocket,
              (struct sockaddr*)&serverAddress,
              sizeof(serverAddress)) < 0) {
@@ -31,15 +29,13 @@ int main() {
         return 1;
     }
 
-    std::cout << "Bind successful on port 8080\n";
-
     // Listen
     if (listen(serverSocket, 5) < 0) {
         std::cerr << "Listen failed\n";
         return 1;
     }
 
-    std::cout << "Server listening on port 8080...\n";
+    std::cout << "Server running on port 8080...\n";
 
     while (true) {
 
@@ -54,33 +50,66 @@ int main() {
         );
 
         if (clientSocket < 0) {
-            std::cerr << "Client accept failed\n";
+            std::cerr << "Accept failed\n";
             continue;
         }
 
-        std::cout << "Client connected\n";
+        std::cout << "\nClient connected\n";
 
-        // HTTP response
+        // Buffer to store request
+        char buffer[4096] = {0};
+
+        // Read request
+        int bytesReceived = recv(
+            clientSocket,
+            buffer,
+            sizeof(buffer),
+            0
+        );
+
+        if (bytesReceived < 0) {
+            std::cerr << "Receive failed\n";
+            close(clientSocket);
+            continue;
+        }
+
+        // Convert request to string
+        std::string request(buffer);
+
+        // Print raw HTTP request
+        std::cout << "\n===== HTTP REQUEST =====\n";
+        std::cout << request << std::endl;
+
+        // Parse request line
+        std::stringstream requestStream(request);
+
+        std::string method;
+        std::string path;
+        std::string version;
+
+        requestStream >> method >> path >> version;
+
+        std::cout << "Method: " << method << std::endl;
+        std::cout << "Path: " << path << std::endl;
+        std::cout << "Version: " << version << std::endl;
+
+        // Response
         std::string response =
             "HTTP/1.1 200 OK\r\n"
             "Content-Type: text/html\r\n"
             "\r\n"
             "<html>"
-            "<head><title>Custom HTTP Server</title></head>"
             "<body>"
-            "<h1>Custom HTTP Server Running</h1>"
+            "<h1>HTTP Request Parsed Successfully</h1>"
             "</body>"
             "</html>";
 
-        // Send response
         send(
             clientSocket,
             response.c_str(),
             response.size(),
             0
         );
-
-        std::cout << "Response sent successfully\n";
 
         close(clientSocket);
     }
