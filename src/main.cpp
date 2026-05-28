@@ -4,6 +4,23 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <fstream>
+
+std::string readFile(const std::string& filePath) {
+
+    std::ifstream file(filePath);
+
+    if (!file.is_open()) {
+        return "";
+    }
+
+    std::string content(
+        (std::istreambuf_iterator<char>(file)),
+        std::istreambuf_iterator<char>()
+    );
+
+    return content;
+}
 
 int main() {
 
@@ -94,34 +111,28 @@ int main() {
         std::cout << "Version: " << version << std::endl;
 
         // Response
-       std::string response;
+     std::string response;
+std::string fileContent;
 
 if (path == "/") {
 
+    fileContent = readFile("static/index.html");
+
     response =
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: text/html\r\n"
-        "\r\n"
-        "<html>"
-        "<body>"
-        "<h1>Welcome to Custom HTTP Server</h1>"
-        "</body>"
-        "</html>";
-
+        "\r\n" +
+        fileContent;
 }
 else if (path == "/about") {
 
+    fileContent = readFile("static/about.html");
+
     response =
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: text/html\r\n"
-        "\r\n"
-        "<html>"
-        "<body>"
-        "<h1>About Page</h1>"
-        "<p>Built from scratch in C++</p>"
-        "</body>"
-        "</html>";
-
+        "\r\n" +
+        fileContent;
 }
 else if (path == "/health") {
 
@@ -130,19 +141,17 @@ else if (path == "/health") {
         "Content-Type: text/plain\r\n"
         "\r\n"
         "Server is healthy";
-
 }
 else {
+
+    fileContent =
+        "<html><body><h1>404 Not Found</h1></body></html>";
 
     response =
         "HTTP/1.1 404 Not Found\r\n"
         "Content-Type: text/html\r\n"
-        "\r\n"
-        "<html>"
-        "<body>"
-        "<h1>404 Not Found</h1>"
-        "</body>"
-        "</html>";
+        "\r\n" +
+        fileContent;
 }
 
         send(
