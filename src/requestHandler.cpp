@@ -69,12 +69,24 @@ void handleClient(int clientSocket) {
     }
     else if (path == "/health") {
 
-        response =
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Type: text/plain\r\n"
-            "\r\n"
-            "Server is healthy";
-    }
+    response =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/plain\r\n"
+        "\r\n"
+        "Server is healthy";
+}
+else if (path == "/api/health") {
+
+    response =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: application/json\r\n"
+        "\r\n"
+        "{"
+        "\"status\":\"healthy\","
+        "\"server\":\"CustomHTTPServer\","
+        "\"version\":\"1.0\""
+        "}";
+}
     else {
         logMessage("Response: 404 Not Found");
 
