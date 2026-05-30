@@ -30,6 +30,14 @@ void handleClient(int clientSocket) {
 
     std::string request(buffer);
 
+    std::string body;
+
+size_t bodyPos = request.find("\r\n\r\n");
+
+if (bodyPos != std::string::npos) {
+    body = request.substr(bodyPos + 4);
+}
+
     std::stringstream requestStream(request);
 
     std::string method;
@@ -38,7 +46,7 @@ void handleClient(int clientSocket) {
 
     requestStream >> method >> path >> version;
 
-    logMessage("Requested path: " + path);
+    logMessage("Request: " + method + " " + path);
 
     std::string filePath;
 
@@ -87,6 +95,20 @@ else if (path == "/api/health") {
         "\"version\":\"1.0\""
         "}";
 }
+
+else if (path == "/api/echo" && method == "POST") {
+
+    logMessage("Response: 200 OK");
+
+    response =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: application/json\r\n"
+        "\r\n"
+        "{"
+        "\"message\":\"" + body + "\""
+        "}";
+} 
+
     else {
         logMessage("Response: 404 Not Found");
 
