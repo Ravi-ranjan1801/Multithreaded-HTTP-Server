@@ -11,7 +11,7 @@
 
 void handleClient(int clientSocket) {
 
-  logMessage("Client connected");
+  logMessage("Client connected: ");
 
     char buffer[4096] = {0};
 
@@ -45,6 +45,27 @@ if (bodyPos != std::string::npos) {
     std::string version;
 
     requestStream >> method >> path >> version;
+    
+    if (method.empty() || path.empty()) {
+
+    logMessage("Response: 400 Bad Request");
+
+    std::string response =
+        "HTTP/1.1 400 Bad Request\r\n"
+        "Content-Type: text/plain\r\n"
+        "\r\n"
+        "Bad Request";
+
+    send(
+        clientSocket,
+        response.c_str(),
+        response.size(),
+        0
+    );
+
+    close(clientSocket);
+    return;
+}
 
     logMessage("Request: " + method + " " + path);
 
@@ -62,51 +83,61 @@ if (bodyPos != std::string::npos) {
 
     std::string response;
 
-    if (!filePath.empty()) {
-        logMessage("Response: 200 OK");
+  if (!filePath.empty()) {
 
-        std::string fileContent = readFile(filePath);
+    std::string fileContent = readFile(filePath);
 
-        std::string contentType = getContentType(filePath);
+    std::string contentType = getContentType(filePath);
 
-        response =
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Type: " + contentType + "\r\n"
-            "\r\n" +
-            fileContent;
-    }
+    response =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: " + contentType + "\r\n"
+        "Content-Length: " +
+        std::to_string(fileContent.size()) +
+        "\r\n\r\n" +
+        fileContent;
+}
     else if (path == "/health") {
+        
+ std::string body = "Server is healthy";
 
     response =
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: text/plain\r\n"
-        "\r\n"
-        "Server is healthy";
+        "Content-Length: " +
+        std::to_string(body.size()) +
+        "\r\n\r\n" +
+        body;
 }
 else if (path == "/api/health") {
+
+    std::string body =
+        "{\"status\":\"healthy\","
+        "\"server\":\"CustomHTTPServer\","
+        "\"version\":\"1.0\"}";
 
     response =
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: application/json\r\n"
-        "\r\n"
-        "{"
-        "\"status\":\"healthy\","
-        "\"server\":\"CustomHTTPServer\","
-        "\"version\":\"1.0\""
-        "}";
+        "Content-Length: " +
+        std::to_string(body.size()) +
+        "\r\n\r\n" +
+        body;
 }
 
 else if (path == "/api/echo" && method == "POST") {
 
     logMessage("Response: 200 OK");
+std::string bodyResponse =
+    "{\"message\":\"" + body + "\"}";
 
-    response =
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: application/json\r\n"
-        "\r\n"
-        "{"
-        "\"message\":\"" + body + "\""
-        "}";
+response =
+    "HTTP/1.1 200 OK\r\n"
+    "Content-Type: application/json\r\n"
+    "Content-Length: " +
+    std::to_string(bodyResponse.size()) +
+    "\r\n\r\n" +
+    bodyResponse;
 } 
 
     else {

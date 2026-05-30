@@ -1,27 +1,33 @@
 # Multithreaded HTTP Server
 
-A custom HTTP/1.1 server built from scratch in C++ using TCP socket programming, featuring request parsing, routing, static file serving, MIME type handling, structured logging, and thread-pool based concurrency.
+A custom HTTP/1.1 server built from scratch in C++ using TCP socket programming. The server supports request parsing, route handling, static file serving, JSON API endpoints, structured logging, and thread-pool based concurrency.
 
 ## Features
 
-- HTTP/1.1 request parsing
-- Static file serving (HTML, CSS)
-- Route handling
-- MIME type detection
-- JSON API endpoint support
-- Structured server logging
-- Thread-pool based concurrency model
-- Modular architecture
+* HTTP/1.1 Request Parsing
+* Static File Serving (HTML, CSS)
+* Route Handling
+* MIME Type Detection
+* JSON API Endpoints
+* Structured Logging
+* Thread Pool Based Concurrency
+* Modular Architecture
+* 400 Bad Request Handling
+* Content-Length Header Support
 
 ## Tech Stack
 
-- C++
-- POSIX Sockets
-- Multithreading (std::thread)
-- Mutexes
-- Condition Variables
-- File I/O
-- Linux (WSL Ubuntu)
+* C++
+* POSIX Sockets
+* Multithreading (`std::thread`)
+* Mutexes
+* Condition Variables
+* File I/O
+* Linux (WSL Ubuntu)
+
+## Architecture
+
+The main server thread accepts incoming client connections and pushes them into a synchronized task queue. A fixed-size thread pool consumes tasks from the queue and processes HTTP requests concurrently. The server supports request parsing, route handling, static file serving, MIME-type detection, structured logging, and JSON API responses.
 
 ## Project Structure
 
@@ -44,17 +50,20 @@ custom-http-server/
 │   ├── about.html
 │   └── style.css
 │
-└── build/
+├── screenshots/
+│
+└── README.md
 ```
 
 ## Supported Routes
 
-| Route | Description |
-|---------|-------------|
-| / | Home Page |
-| /about | About Page |
-| /health | Plain-text health check |
-| /api/health | JSON API health check |
+| Route       | Method | Description             |
+| ----------- | ------ | ----------------------- |
+| /           | GET    | Home Page               |
+| /about      | GET    | About Page              |
+| /health     | GET    | Plain Text Health Check |
+| /api/health | GET    | JSON Health Check       |
+| /api/echo   | POST   | Echo Request Body       |
 
 ## Build
 
@@ -63,7 +72,8 @@ g++ src/main.cpp \
     src/Logger.cpp \
     src/FileUtils.cpp \
     src/RequestHandler.cpp \
-    -o build/server -pthread
+    -o build/server \
+    -pthread
 ```
 
 ## Run
@@ -80,22 +90,24 @@ http://localhost:8080
 
 ## Concepts Demonstrated
 
-- Socket Programming
-- HTTP Protocol
-- Request Parsing
-- Multithreading
-- Thread Pools
-- Synchronization
-- File Serving
-- Backend Architecture
-- Concurrent Client Handling
+* Socket Programming
+* HTTP Protocol
+* Request Parsing
+* Thread Pools
+* Synchronization
+* Concurrent Client Handling
+* Static File Serving
+* Backend Architecture
+* Structured Logging
 
 ## Future Improvements
 
-- Image Serving
-- Configuration Files
-- Persistent Connections
-- Unit Testing
+* Configuration Files
+* Persistent Connections
+* Unit Testing
+* HTTPS Support
+* Image Serving
+
 
 ## Screenshots
 

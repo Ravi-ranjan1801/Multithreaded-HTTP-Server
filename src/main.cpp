@@ -75,7 +75,9 @@ int main() {
         return 1;
     }
 
-    logMessage("Server running on port 8080...");
+    logMessage(
+    "CustomHTTPServer v1.0 started on port 8080"
+);
 
     const int THREAD_COUNT = 4;
 
@@ -85,6 +87,9 @@ for (int i = 0; i < THREAD_COUNT; i++) {
 
     threadPool.emplace_back(workerThread);
 }
+logMessage(
+    "Thread pool initialized with 4 workers"
+);
 
     while (true) {
 
@@ -96,6 +101,7 @@ for (int i = 0; i < THREAD_COUNT; i++) {
         (struct sockaddr*)&clientAddress,
         &clientSize
     );
+    
 
     if (clientSocket < 0) {
         std::cerr << "Accept failed\n";
