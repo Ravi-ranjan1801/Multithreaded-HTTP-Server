@@ -122,3 +122,15 @@ http://localhost:8080
 ### Server Logs
 
 ![Logs](screenshots/logs.png)
+
+---
+If you have any questions or need help:
+
+- **Email**: [raviranjan12059@gmail.com](mailto:raviranjan12059@gmail.com)
+- **GitHub Issues**: [Create an issue](https://github.com/Ravi-ranjan1801/Multithreaded-HTTP-Server/issues)
+
+---
+
+<div align="center">
+
+**Made with ❤️ by [Ravi Ranjan](https://github.com/Ravi-ranjan1801)**
