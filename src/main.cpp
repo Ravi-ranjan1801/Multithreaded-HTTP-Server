@@ -1,4 +1,5 @@
 #include "../include/Logger.h"
+#include "../include/FileUtils.h"
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -19,35 +20,6 @@ std::queue<int> clientQueue;
 std::mutex queueMutex;
 
 std::condition_variable conditionVar;
-
-std::string readFile(const std::string& filePath) {
-
-    std::ifstream file(filePath);
-
-    if (!file.is_open()) {
-        return "";
-    }
-
-    std::string content(
-        (std::istreambuf_iterator<char>(file)),
-        std::istreambuf_iterator<char>()
-    );
-
-    return content;
-}
-
-std::string getContentType(const std::string& path) {
-
-    if (path.find(".css") != std::string::npos) {
-        return "text/css";
-    }
-
-    if (path.find(".html") != std::string::npos) {
-        return "text/html";
-    }
-
-    return "text/plain";
-}
 
 
 void handleClient(int clientSocket) {
