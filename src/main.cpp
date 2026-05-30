@@ -9,6 +9,15 @@
 #include <vector>
 #include <ctime>
 #include <iomanip>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+
+std::queue<int> clientQueue;
+
+std::mutex queueMutex;
+
+std::condition_variable conditionVar;
 
 std::string readFile(const std::string& filePath) {
 
@@ -150,6 +159,28 @@ void handleClient(int clientSocket) {
     close(clientSocket);
 }
 
+void workerThread() {
+
+    while (true) {
+
+        int clientSocket;
+
+        {
+            std::unique_lock<std::mutex> lock(queueMutex);
+
+            conditionVar.wait(lock, [] {
+                return !clientQueue.empty();
+            });
+
+            clientSocket = clientQueue.front();
+
+            clientQueue.pop();
+        }
+
+        handleClient(clientSocket);
+    }
+}
+
 int main() {
 
     // Create socket
@@ -182,6 +213,15 @@ int main() {
 
     logMessage("Server running on port 8080...");
 
+    const int THREAD_COUNT = 4;
+
+std::vector<std::thread> threadPool;
+
+for (int i = 0; i < THREAD_COUNT; i++) {
+
+    threadPool.emplace_back(workerThread);
+}
+
     while (true) {
 
     sockaddr_in clientAddress{};
@@ -199,13 +239,13 @@ int main() {
     }
 
     // Create thread for each client
-    std::thread clientThread(
-        handleClient,
-        clientSocket
-    );
+   {
+    std::lock_guard<std::mutex> lock(queueMutex);
 
-    // Detach thread
-    clientThread.detach();
+    clientQueue.push(clientSocket);
+}
+
+conditionVar.notify_one();
 }
 
     close(serverSocket);
