@@ -4,14 +4,28 @@
 
 #include <iostream>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <unistd.h>
+#include <cerrno>
 #include <sstream>
 #include <string>
+
+// Seconds a client may stay silent before the worker gives up on it
+#ifndef CLIENT_TIMEOUT_SECONDS
+#define CLIENT_TIMEOUT_SECONDS 5
+#endif
 
 
 void handleClient(int clientSocket) {
 
   logMessage("Client connected: ");
+
+      // Stop recv() and send() from blocking forever on a slow or idle client
+    timeval timeout{};
+    timeout.tv_sec = CLIENT_TIMEOUT_SECONDS;
+    timeout.tv_usec = 0;
+    setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+    setsockopt(clientSocket, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
 
     char buffer[4096] = {0};
 
@@ -22,8 +36,22 @@ void handleClient(int clientSocket) {
         0
     );
 
-    if (bytesReceived < 0) {
-        std::cerr << "Receive failed\n";
+        if (bytesReceived < 0) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            logMessage("Response: 408 Request Timeout");
+
+            const std::string timedOut =
+                "HTTP/1.1 408 Request Timeout\r\n"
+                "Content-Type: text/plain\r\n"
+                "Connection: close\r\n"
+                "Content-Length: 16\r\n"
+                "\r\n"
+                "Request Timeout\n";
+
+            send(clientSocket, timedOut.c_str(), timedOut.size(), 0);
+        } else {
+            std::cerr << "Receive failed\n";
+        }
         close(clientSocket);
         return;
     }
