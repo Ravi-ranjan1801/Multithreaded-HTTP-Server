@@ -22,6 +22,10 @@ std::mutex queueMutex;
 
 std::condition_variable conditionVar;
 
+#ifndef MAX_QUEUE_SIZE
+#define MAX_QUEUE_SIZE 100
+#endif
+
 
 void workerThread() {
 
@@ -108,12 +112,35 @@ logMessage(
         continue;
     }
 
-    // Create thread for each client
-   {
-    std::lock_guard<std::mutex> lock(queueMutex);
+    
+    // Hand the client to the worker pool, unless the queue is full
+    bool queued = false;
+    {
+        std::lock_guard<std::mutex> lock(queueMutex);
 
-    clientQueue.push(clientSocket);
-}
+        if (clientQueue.size() < MAX_QUEUE_SIZE) {
+            clientQueue.push(clientSocket);
+            queued = true;
+        }
+    }
+
+    if (queued) {
+        conditionVar.notify_one();
+    } else {
+        // Overloaded: reject immediately so the server stays responsive
+        logMessage("Response: 503 Service Unavailable (queue full)");
+
+        const std::string busy =
+            "HTTP/1.1 503 Service Unavailable\r\n"
+            "Content-Type: text/plain\r\n"
+            "Retry-After: 1\r\n"
+            "Content-Length: 19\r\n"
+            "\r\n"
+            "Server is too busy\n";
+
+        send(clientSocket, busy.c_str(), busy.size(), 0);
+        close(clientSocket);
+    }
 
 conditionVar.notify_one();
 }
